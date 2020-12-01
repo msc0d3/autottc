@@ -1,24 +1,30 @@
 ﻿Imports System.Text.RegularExpressions
 Imports Newtonsoft.Json.Linq
 Public Class Facebook_Api_Class
-    Public Shared Function CheckLiveCookie(cookie As String, Optional userAgent As String = "", Optional proxy As String = "") As String
+    Public Shared Function CheckLiveCookie(cookie As String) As String
         Dim output As String = "die"
-        Dim uid As String = Regex.Match(cookie, "c_user=(.*?);").Groups(1).Value
-        Dim request As Http_Helper = New Http_Helper(cookie, userAgent, "")
-        Dim flag As Boolean = uid <> ""
-        If flag Then
-            Dim html As String = request.RequestGet("https://www.facebook.com/me").ToString()
-            Dim flag2 As Boolean = html.Contains("id=""code_in_cliff""")
-            If flag2 Then
-                output = "die"
-            Else
-                Dim flag3 As Boolean = Regex.Match(html, """USER_ID"":""(.*?)""").Groups(1).Value.Trim() = uid.Trim() AndAlso Not html.Contains("checkpointSubmitButton")
-                If flag3 Then
-                    output = "live"
-                End If
-            End If
+        Dim request As New Http_Helper(cookie)
+        Dim data_response As String = request.RequestGet("https://m.facebook.com/composer/ocelot/async_loader/?publisher=feed").ToString()
+        If Not data_response.Contains("accessToken") Then
+            Return "die"
         End If
-        Return output
+        Return "live"
+        'Dim uid As String = Regex.Match(cookie, "c_user=(.*?);").Groups(1).Value
+        'Dim request As Http_Helper = New Http_Helper(cookie, userAgent, "")
+        'Dim flag As Boolean = uid <> ""
+        'If flag Then
+        '    Dim html As String = request.RequestGet("https://www.facebook.com/me").ToString()
+        '    Dim flag2 As Boolean = html.Contains("id=""code_in_cliff""")
+        '    If flag2 Then
+        '        output = "die"
+        '    Else
+        '        Dim flag3 As Boolean = Regex.Match(html, """USER_ID"":""(.*?)""").Groups(1).Value.Trim() = uid.Trim() AndAlso Not html.Contains("checkpointSubmitButton")
+        '        If flag3 Then
+        '            output = "live"
+        '        End If
+        '    End If
+        'End If
+        'Return output
     End Function
     Public Shared Function CheckLiveToken(ByVal token As String) As Boolean
         Dim output As Boolean = False
@@ -68,6 +74,30 @@ Public Class Facebook_Api_Class
         End Try
         Return result
     End Function
+    'Public Shared Function Comment(idpost As String, cmttext As String, cookie As String)
+    '    Dim result As String = ""
+    '    Try
+    '        Dim request_cmt As New Http_Helper(cookie, "", "")
+    '        Dim data_cmt As String = request_cmt.RequestGet("https://mbasic.facebook.com/" & cookie)
+    '        Dim Linkcmt As String = Regex.Match(data_cmt, "/mbasic/comment/advanced/(.*?)""").Groups(1).Value.Replace("amp;", "")
+    '        If Linkcmt.Length < 2 Then
+    '            Return "linkdie"
+    '        End If
+    '        Dim FullLInkCmt As String = "https://mbasic.facebook.com/mbasic/comment/advanced/" + Linkcmt
+
+    '        Dim is_block = Regex.Match(data_follow, "code(.*?),")
+    '        If is_block.Success Then
+    '            If is_block.Groups(1).Value.Contains("368") Then
+    '                Return "blocked"
+    '            End If
+    '            Return "fail"
+    '        End If
+    '        Return "fail"
+    '    Catch ex As Exception
+    '        result = "error"
+    '    End Try
+    '    Return result
+    'End Function
     Public Shared Function Like_Post(token As String, uid As String, cookie As String)
         Dim result As String = ""
         Try

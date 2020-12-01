@@ -51,7 +51,7 @@ Public Class Http_Helper
                 result = Me.request.Post(url, data, contentType).ToString()
             End If
         Catch e1 As Exception
-            result = ""
+            result = "error"
         End Try
         Return result
     End Function
