@@ -13,6 +13,8 @@ Module Module1
     Private COUNT_MISSION As Integer
     Private user_ttc As String
     Private password_ttc As String
+    Private VersionCli As Double = 2.2
+    Private Linkupdate As String = ""
     ''' <summary>
     ''' @2020 Open Source Code : FAM Software, tienichmmo.net
     ''' Coder : Nguyen Dac Tai
@@ -20,6 +22,31 @@ Module Module1
     ''' Note : Please don't remove this note !!! | xin đừng xoá dòng này !
     ''' </summary>
     Sub Main()
+        Dim Http_Helper As New Http_Helper()
+        Dim response As String = Http_Helper.RequestGet("https://tienichmmo.net/api/tool_autottc/version")
+        If response = "error" Then
+            MsgBox("bạn không có quyền truy cập vào tool này !", "access denied !", MsgBoxStyle.Critical)
+            Environment.Exit(0)
+        End If
+        Dim version_server As String = Regex.Match(response, "ver = (.*?),").Groups(1).Value
+        If VersionCli < Convert.ToDouble(version_server) Then
+            MsgBox("phát hiện thấy phiên bản mới ! lập tức update...")
+            Linkupdate = Regex.Match(response, "Link_update = ""(.*?)""").Groups(1).Value
+            Try
+                Process.Start("chrome.exe", Linkupdate)
+            Catch ex As Exception
+                Process.Start(Linkupdate)
+            End Try
+            Environment.Exit(0)
+        End If
+        Dim responseIsOnline = Http_Helper.RequestGet("https://tienichmmo.net/api/tool_autottc/server")
+        If responseIsOnline = "error" Then
+            MsgBox("bạn không có quyền truy cập vào tool này !", "access denied !", MsgBoxStyle.Critical)
+            Environment.Exit(0)
+        End If
+        If responseIsOnline.Contains("OFF") Then
+            'khoá
+        End If
         Console.WriteLine(Helper.Logo())
         Helper.Write_Line_Status("By FAM Software, tienichmmo.net", 3)
         Console.WriteLine("______________________________________________________")
@@ -34,22 +61,26 @@ Module Module1
         Do
             'Start:
             'For Each cookies As String In read_ck
+            Helper.Write_Line_Status("DANG CHECK LIVE FB...", 3)
             If count_loop >= LOOP_COUNT Then
                 is_done = True
             End If
             Load_Setting()
             Dim cookie_fb As String = read_ck
             Dim token_fb As String = Facebook_Api_Class.Get_Token(cookie_fb)
-            Dim is_live_fb As Boolean = Facebook_Api_Class.CheckLiveToken(token_fb)
-            'If is_live_fb = False Then
-            '    Helper.Write_Line_Status("FACE BOOK DA DIE !", 1)
-            '    Exit Sub
-            'End If
+            Dim is_live_fb As String = Facebook_Api_Class.CheckLiveCookie(cookie_fb)
+            If is_live_fb = "die" Then
+                Helper.Write_Line_Status("FACE BOOK DA DIE !", 1)
+                Exit Sub
+            End If
+            Helper.Write_Line_Status("FB LIVE !", 2)
+            Helper.Write_Line_Status("DANG LOGIN VÀO TTC...", 3)
             Dim cookie_tds As String = TTC_API_CLASS.Get_Cookie_TTC(user_ttc, password_ttc)
             If cookie_tds = "sai_tk" Or cookie_tds = "error" Then
                 Helper.Write_Line_Status("TAI KHOAN TTC LOI !", 1)
                 Exit Sub
             End If
+            Helper.Write_Line_Status("LOGIN TTC OK !..", 2)
             If Like_Post = True Then
                 TTC_API_CLASS.Like_Post_List(cookie_tds, token_fb, cookie_fb, SLEEP_COUNT)
             End If
@@ -119,7 +150,7 @@ Module Module1
             Dim data_acc As String() = read_ttc_acc.Split("|")
             user_ttc = data_acc(0)
             password_ttc = data_acc(1)
-            Console.Title = "Auto TTC v2.0 FREE VERSION By tienichmmo.net | account_ttc > " & user_ttc
+            Console.Title = "Auto TTC v2.2 FREE VERSION By tienichmmo.net | account_ttc > " & user_ttc
         Catch ex As Exception
             Helper.Write_Line_Status("File acc_ttc.txt not found !", 1)
             Console.ReadLine()
